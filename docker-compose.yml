@@ -1,0 +1,41 @@
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.1.3
+    container_name: elasticsearch
+    environment:
+      discovery.type: single-node # מגדיר שה-ES ירוץ כצומת יחיד (לא צריך חיפוש צמתים אחרים)
+      xpack.security.enabled: false # מכבה את מערכת האבטחה של X-Pack (אין אימות משתמשים)
+      ES_JAVA_OPTS: -Xms1g -Xmx1g  # מגדיר heap memory של Java: מינימום ומקסימום 1GB
+    ports:
+      - "9200:9200"
+
+  kibana:
+    image:  docker.elastic.co/kibana/kibana:9.1.3
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200/
+    depends_on:
+      - elasticsearch
+
+
+  elasticsearch-malicious-text:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: elasticsearch-malicious-text
+    container_name: elasticsearch-malicious-text
+    environment:
+      ELASTICSEARCH_HOST:  http://elasticsearch:9200/
+      APP_PORT: 8000
+      APP_HOST: 0.0.0.0
+      INDEX_NAME: tweets
+      DATA_URL: data/tweets_injected_3.csv
+      WEAPONS_FILE_URL: data/weapon_list.txt
+    ports:
+      - "8000:8000"
+    depends_on:
+      - elasticsearch
+
+  
