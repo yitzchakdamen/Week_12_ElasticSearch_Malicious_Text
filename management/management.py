@@ -19,11 +19,11 @@ class Management:
         return self.dal.delete_document(index_name=self.index_name, query=Services.query_to_delete)
         
     def analysis_weapons_detected(self, weapons_file_url:str):
-        weapons = FileManager.uploading_content(weapons_file_url).split()  # type: ignore
+        weapons = FileManager.uploading_content(weapons_file_url)
         documents:list[dict] = self.dal.scan(self.index_name, query={"match": {"text": weapons}})
         
         for doc in documents:
-            doc['_source']['weapons_detected'] = Analysis.weapons_detected(text=doc['_source']['text'], weapons=weapons)
+            doc['_source']['weapons_detected'] = Analysis.weapons_detected(text=doc['_source']['text'], weapons=weapons.split())  # type: ignore
         self.dal.update_many(documents=documents)
         
     def analysis_sentiment(self):
