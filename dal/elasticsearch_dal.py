@@ -44,7 +44,7 @@ class ElasticSearchDal:
     def update_many(self, documents:list[dict]):
         helpers.bulk(client=self.es, actions=[{"_op_type": "update", "_index": doc['_index'],"_id": doc["_id"], "doc": doc['_source']} for doc in documents], refresh="wait_for")
 
-    def get(self, index_name: str, query):
+    def scan(self, index_name: str, query):
         return list(helpers.scan(self.es, index=index_name, query={"query": query}))
     
     def delete_document(self, index_name:str, id=None, query=None):
