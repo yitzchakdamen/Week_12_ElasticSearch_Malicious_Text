@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 dal = ElasticSearchDal(config.ELASTICSEARCH_HOST)
-status = {"done": False}
+status = {"done": False, 'sum':0}
 
 i = 0 
 

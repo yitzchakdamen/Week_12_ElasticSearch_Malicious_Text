@@ -15,52 +15,20 @@ class Management:
         format_documents = Services.format_document(documents)
         self.dal.index_many(documents=format_documents, index_name=index_name)
 
-    def analysis_document(self, document: dict ,weapons:list):
-        document['weapons_detected'] = Analysis.weapons_detected(text=document['text'],weapons=weapons)
-        document['sentiment'] = Analysis.sentiment_category(Analysis.analyze_sentiment(text=document['text']))
-        return document
-    
-    def delete_document(self):
+    def delete_not_antisemitic_document(self):
         return self.dal.delete_document(index_name=self.index_name, query=Services.query_to_delete)
         
-    def analysis_all_document(self, weapons_file_url:str):
-        weapons:list = FileManager.uploading_content(weapons_file_url).split() # type: ignore
-        documents:list[dict] = self.dal.get(self.index_name, query={"match_all": {}})
+    def analysis_weapons_detected(self, weapons_file_url:str):
+        weapons = FileManager.uploading_content(weapons_file_url).split()  # type: ignore
+        documents:list[dict] = self.dal.scan(self.index_name, query={"match": {"text": weapons}})
+        
         for doc in documents:
-            doc['_source'] = self.analysis_document(document=doc['_source'], weapons=weapons)
+            doc['_source']['weapons_detected'] = Analysis.weapons_detected(text=doc['_source']['text'], weapons=weapons)
         self.dal.update_many(documents=documents)
         
-
+    def analysis_sentiment(self):
+        documents:list[dict] = self.dal.scan(self.index_name, query={"match_all": {}})
         
-        
-        
-        
-# {
-#   "query": {
-#     "bool": {
-#       "must": [
-#         { "match": { "Antisemitic": "0" }},
-#         { "terms": { "Sentiment": ["neutral", "positive"] }},
-#         {
-#           "bool": {
-#             "should": [
-#               {
-#                 "script_score": {
-#                   "query": {
-#                     "exists": {
-#                       "field": "Weapons"
-#                     }
-#                   },
-#                   "script": {
-#                     "source": "if (doc['Weapons'].size() > 0) { return doc['Weapons'].size() } else { return 0 }"
-#                   }
-#                 }
-#               }
-#             ]
-#           }
-#         }
-#       ],
-#       "must_not": []
-#     }
-#   }
-# }
+        for doc in documents:
+            doc['_source']['sentiment'] = Analysis.sentiment_category(Analysis.analyze_sentiment(text=doc['_source']['text']))
+        self.dal.update_many(documents=documents)
