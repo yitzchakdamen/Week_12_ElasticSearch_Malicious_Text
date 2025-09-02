@@ -12,11 +12,13 @@ app = FastAPI()
 
 @app.get("/api/antisemitic-documents")
 async def get_antisemitic_documents():
-    return management_runner.dal.scan(index_name=config.INDEX_NAME,  query=Services.query_to_get_antisemitic_documents) if management_runner.status["done"] else "processing"
-
+    if  management_runner.status["done"]:
+        return management_runner.dal.scan(index_name=config.INDEX_NAME,  query=Services.query_to_get_antisemitic_documents)
+    return f"processing ... done {management_runner.status['sum']} process"
         
 @app.get("/api/weapons")
 async def get_weapons():
-    return management_runner.dal.scan(index_name = config.INDEX_NAME, query=Services.query_to_get_weapons_documents) if management_runner.status["done"] else "processing"
-
+    if management_runner.status["done"]: 
+        return management_runner.dal.scan(index_name = config.INDEX_NAME, query=Services.query_to_get_weapons_documents)
+    return f"processing ... done {management_runner.status['sum']} process"
         
